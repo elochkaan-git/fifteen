@@ -22,20 +22,29 @@ public:
         srand(time(0));
         shuffle();
     }
-    void move_cell(int x, int y) {
+    bool move_cell(int x, int y) {
         int index = y * cols + x;
         if (field[index]->isNull())
-            return;
-        if (isFree(x, y-1))
+            return 0;
+        if (isFree(x, y-1)) {
             std::swap(field[index], field[index - cols]);
-        else if (isFree(x, y+1))
+            return 1;
+        }
+        else if (isFree(x, y+1)) {
             std::swap(field[index], field[index + cols]);
-        else if (isFree(x-1, y))
+            return 1;
+        }
+        else if (isFree(x-1, y)){
             std::swap(field[index], field[index - 1]);
-        else if (isFree(x+1, y))
+            return 1;
+        }
+        else if (isFree(x+1, y)){
             std::swap(field[index], field[index + 1]);
+            return 1;
+        }
+        return 0;
     }
-    void move_cell(int dir) {
+    bool move_cell(int dir) {
         int dx[] = { 0,  1,  0, -1};
         int dy[] = {-1,  0,  1,  0};
 
@@ -48,10 +57,11 @@ public:
 
                     if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
                         std::swap(field[index], field[ni * cols + nj]);
-                        return;
+                        return 1;
                     }
                 }
             }
+        return 0;
     }
     bool is_win() const {
         if (!field[rows * cols - 1]->isNull())

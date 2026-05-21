@@ -3,12 +3,17 @@
 #include <QQmlContext>
 #include "board_controller.h"
 #include "board_factory.h"
+#include "score_model.h"
+#include "scoreboard.h"
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     ClassicBoardFactory cbf;
+    Scoreboard sb;
     BoardController bc(&cbf);
+    ScoreboardModel sbm(&sb);
+    QObject::connect(&bc, &BoardController::gameFinished, &sbm, &ScoreboardModel::onGameFinished);
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -18,6 +23,7 @@ int main(int argc, char *argv[])
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
     engine.rootContext()->setContextProperty("board", &bc);
+    engine.rootContext()->setContextProperty("scoreboardModel", &sbm);
 
     engine.loadFromModule("fifteen", "Main");
     return app.exec();

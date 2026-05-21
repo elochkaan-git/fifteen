@@ -15,6 +15,7 @@ add_library(libfifteen STATIC
     board.h
     cell_factory.h
     cell.h
+    scoreboard.h
 )
 
 qt_add_executable(appfifteen
@@ -30,6 +31,8 @@ qt_add_qml_module(appfifteen
         board_controller.h
         QML_FILES MainMenu.qml
         QML_FILES Game.qml
+        QML_FILES Score.qml
+        SOURCES score_model.h
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -47,7 +50,8 @@ target_link_libraries(appfifteen
     PRIVATE Qt6::Quick libfifteen
 )
 
-add_executable(cfifteen cli.cpp)
+add_executable(cfifteen cli.cpp
+    scoreboard.h)
 target_link_libraries(cfifteen
     PRIVATE libfifteen ${CURSES_LIBRARIES}
 )

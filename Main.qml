@@ -20,6 +20,7 @@ Window {
         id: main_menu
         MainMenu {
             onPlayClicked: stack.push(game)
+            onScoreboardClicked: stack.push(scoreboard)
             onExitClicked: Qt.quit()
         }
     }
@@ -28,6 +29,13 @@ Window {
         id: game
         Game {
             onQuitGame: stack.pop()
+        }
+    }
+
+    Component {
+        id: scoreboard
+        Score {
+            onBack: stack.pop()
         }
     }
 }

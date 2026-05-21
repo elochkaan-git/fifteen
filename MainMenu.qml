@@ -4,6 +4,7 @@ import QtQuick.Controls
 Item {
     signal playClicked()
     signal exitClicked()
+    signal scoreboardClicked()
 
     Column {
         spacing: 8
@@ -67,6 +68,11 @@ Item {
                 }
                 playClicked()
             }
+        }
+
+        Button {
+            text: "Таблица лидеров"
+            onClicked: scoreboardClicked()
         }
 
         Button {
