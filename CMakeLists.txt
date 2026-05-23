@@ -11,12 +11,19 @@ find_package(Curses REQUIRED)
 qt_standard_project_setup(REQUIRES 6.8)
 
 add_library(libfifteen STATIC
-    board_factory.h
-    board.h
-    cell_factory.h
-    cell.h
-    scoreboard.h
+    include/board.h
+    include/cell.h
+    include/game.h
+    include/game_creators.h
+    include/game_rules.h
+    include/game_rules_creators.h
+    include/scoreboard.h
+    include/structs.h
+    source/board.cpp
+    source/game_creators.cpp
+    source/game_rules_creators.cpp
 )
+target_include_directories(libfifteen PUBLIC include)
 
 qt_add_executable(appfifteen
     main.cpp
@@ -26,13 +33,13 @@ qt_add_qml_module(appfifteen
     URI fifteen
     VERSION 1.0
     QML_FILES
-        Main.qml
+        qml/Main.qml
+        qml/MainMenu.qml
+        qml/Game.qml
+        qml/Score.qml
     SOURCES
-        board_controller.h
-        QML_FILES MainMenu.qml
-        QML_FILES Game.qml
-        QML_FILES Score.qml
-        SOURCES score_model.h
+        include/board_controller.h 
+        include/score_model.h
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -50,8 +57,7 @@ target_link_libraries(appfifteen
     PRIVATE Qt6::Quick libfifteen
 )
 
-add_executable(cfifteen cli.cpp
-    scoreboard.h)
+add_executable(cfifteen cli.cpp)
 target_link_libraries(cfifteen
     PRIVATE libfifteen ${CURSES_LIBRARIES}
 )
