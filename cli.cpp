@@ -1,3 +1,4 @@
+#include <cctype>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -6,28 +7,31 @@
 #include <ncurses.h>
 #include <string>
 #include <time.h>
-#include "board_factory.h"
+#include "game.h"
+#include "game_creators.h"
 #include "scoreboard.h"
+#include "structs.h"
 
-Player
-solving(std::unique_ptr<Board> board)
+GameResult
+solving(Game* game)
 { 
-  Player result = {"", 0, 0, 0, 0, 0};
+  game->start();
+  GameResult result = {"", 0, 0, 0, 0, 0};
   int choice = 0;
-  int steps = 0;
   bool last_run = false;
   int term_rows, term_cols;
   int cell_width = 4;
-  int board_rows = board->get_rows();
-  int board_cols = board->get_cols();
+  int board_rows = game->rows();
+  int board_cols = game->cols();
   getmaxyx(stdscr, term_rows, term_cols);
 
-  time_t start = time(NULL);
   do {
+    GameStatus status = game->status();
     clear();
     getmaxyx(stdscr, term_rows, term_cols);
 
-    int pair = last_run ? 2 : 1;
+    int pair = status == GameStatus::Win ? 2 : 1;
+    pair = status == GameStatus::Lose ? 3 : pair;
     int start_y = (term_rows - board_rows * 3) / 2;
     int start_x = (term_cols - board_cols * cell_width) / 2;
     
@@ -43,8 +47,8 @@ solving(std::unique_ptr<Board> board)
     for (int i = 0; i < board_rows; ++i) {
       move(start_y + i * 3 + 1, start_x);
       for (int j = 0; j < board_cols; ++j) {
-        int cell = board->get_cell(j, i);
-        int cell_len = snprintf(NULL, 0, "%d", cell); // длина числа
+        int cell = game->cell(j, i);
+        int cell_len = snprintf(NULL, 0, "%d", cell);
         int pad = (cell_width - cell_len) / 2 + (cell_width - cell_len) % 2;
         
 
@@ -64,51 +68,70 @@ solving(std::unique_ptr<Board> board)
       }
     }
 
-    int s = (term_cols - strlen("Z - to shuffle cells")) / 2;
-    mvprintw(start_y + board_rows * 3 + 1, s, "%s", "q - to quit in menu");
-    mvprintw(start_y + board_rows * 3 + 2, s, "%s", "Z - to shuffle cells");
+    int size = (term_cols - strlen("Z - to shuffle cells")) / 2;
+    mvprintw(start_y + board_rows * 3 + 1, size, "%s", "q - to quit in menu");
+    mvprintw(start_y + board_rows * 3 + 2, size, "%s", "Z - to shuffle cells");
     attron(COLOR_PAIR(pair));
-    int elapsed = (int)(time(NULL) - start);
-    s = (term_cols - snprintf(NULL, 0, "Steps: %d  Time: %02d:%02d", steps, elapsed / 60, elapsed % 60)) / 2;
-    mvprintw(start_y + board_rows * 3 + 3, s, "Steps: %d  Time: %02d:%02d", steps, elapsed / 60, elapsed % 60);
+    int elapsed = (int)game->get_elapsed_time();
+    size = (term_cols - snprintf(NULL, 0, "Steps: %d  Time: %02d:%02d", game->steps(), elapsed / 60, elapsed % 60)) / 2;
+    mvprintw(start_y + board_rows * 3 + 3, size, "Steps: %d  Time: %02d:%02d", game->steps(), elapsed / 60, elapsed % 60);
     attroff(COLOR_PAIR(pair));
 
-    if (last_run && board->is_win()) {
+    if (status == GameStatus::Win) {
+      result = game->result();
+      int input = 0, i = 0;
+
       const char *msg = "You win! Enter your name: ";
-      char namebuf[20];
+      char namebuf[20] = {0};
       attron(A_REVERSE);
       mvprintw(start_y + board_rows * 3 + 4, (term_cols - strlen(msg)) / 2, "%s", msg);
       move(start_y + board_rows * 3 + 4, (term_cols - strlen(msg)) / 2 + strlen(msg));
-      echo();
       curs_set(1);
       timeout(-1);
-      scanw("%19s", namebuf);
-      noecho();
+
+      while (1) {
+        input = getch();
+        if (isalnum(input) && i < 20) {
+          printw("%c", input);
+          namebuf[i++] = input;
+        }
+        else if (input == KEY_BACKSPACE && i > 0) {
+          printw("\b \b");
+          namebuf[--i] = 0; 
+        }
+        else if (input == '\n' || input == '\r')
+          break;
+      }
       curs_set(0);
       attroff(A_REVERSE);
       refresh();
 
       result.name = namebuf;
-      result.rows = board_rows;
-      result.cols = board_cols;
-      result.steps = steps;
-      result.time = (int)(time(NULL) - start);
-      result.score = std::max(0, board_rows * board_cols * 200 - (steps * 10 + (int)result.time * 2));
+      break;
+    } else if (status == GameStatus::Lose) {
+      const char *msg = "You lose! Sad :(";
+      attron(A_REVERSE);
+      mvprintw(start_y + board_rows * 3 + 4, (term_cols - strlen(msg)) / 2, "%s", msg);
+      timeout(-1);
+      attroff(A_REVERSE);
+      refresh();
+      getch();
+      break;
+    } else if (choice == 'q') {
+      break;
     }
 
     refresh();
-    if (last_run) break;
 
     timeout(1000);
     choice = getch();
     switch (choice) {
-      case KEY_UP: steps += board->move_cell(2); break;
-      case KEY_RIGHT: steps += board->move_cell(3); break;
-      case KEY_DOWN: steps += board->move_cell(0); break;
-      case KEY_LEFT: steps += board->move_cell(1); break;
-      case 'Z': board->shuffle(); steps = 0; start = time(NULL); break;
+      case KEY_UP: game->move(DIRECTION::DOWN); break;
+      case KEY_RIGHT: game->move(DIRECTION::LEFT); break;
+      case KEY_DOWN: game->move(DIRECTION::UP); break;
+      case KEY_LEFT: game->move(DIRECTION::RIGHT); break;
+      case 'Z': game->shuffle(); break;
     }
-    if (board->is_win() || choice == 'q') last_run = true;
   } while(1);
 
   return result;
@@ -117,40 +140,40 @@ solving(std::unique_ptr<Board> board)
 void
 printsb(Scoreboard* sb) {
   clear();
+  GameResult p;
   int term_rows, term_cols;
   getmaxyx(stdscr, term_rows, term_cols);
   char buf[8], timebuf[6];
   attron(A_REVERSE);
   mvprintw(0, (term_cols - 46) / 2, "%20s %7s %5s %6s %7s", "name", "board", "steps", "time", "score");
-  for (int i = 0; i < sb->get_players().size(); ++i) {
-    Player p = sb->get_players()[i];
+  for (int i = 0; i < sb->get_results().size(); ++i) {
+    p = sb->get_results()[i];
     snprintf(buf, sizeof(buf), "%dx%d", p.rows, p.cols);
     snprintf(timebuf, sizeof(timebuf), "%02d:%02d", p.time / 60, p.time % 60);
     mvprintw(i+1, (term_cols - 46) / 2, "%20s %7s %5d %6s %7d", p.name.c_str(), buf, p.steps, timebuf, p.score);
   }
   attroff(A_REVERSE);
   timeout(-1);
-  getch();
   refresh();
+  getch();
 }
 
 void
 main_loop()
 {
   Scoreboard sb = Scoreboard();
+  GameResult p;
 
-  std::map<std::string, std::unique_ptr<BoardFactory>> factories;
-  factories["small"] = std::make_unique<SmallBoardFactory>();
-  factories["classic"] = std::make_unique<ClassicBoardFactory>();
-  factories["large"] = std::make_unique<LargeBoardFactory>();
-  factories["rectangle"] = std::make_unique<RectangleBoardFactory>();
+  std::map<std::string, std::unique_ptr<Game>> factories;
+  factories["classic"] = std::make_unique<ClassicGame>(4, 4);
+  factories["small"] = std::make_unique<ClassicGame>(3, 3);
+  factories["time limit"] = std::make_unique<TimeGame>(2, 2, 10);
 
   int choice = 0, index = 0;
   int rows = 0, cols = 0;
   int row_max_len = 0;
   int term_rows, term_cols;
   int start_x, start_y;
-  bool custom_selected = false;
   std::vector<std::string> keys;
 
   for (const auto& [key, value] : factories) {
@@ -162,26 +185,25 @@ main_loop()
   
 
   do {
-    getmaxyx(stdscr, term_rows, term_cols);
     clear();
+    getmaxyx(stdscr, term_rows, term_cols);
     start_y = (term_rows - keys.size()) / 2;
     start_x = (term_cols - row_max_len) / 2;
     for (int i = 0; i < keys.size(); ++i) {
-      move(start_y + i, start_x);
       if (i == index) attron(A_REVERSE);
-      printw("%s", keys[i].c_str());
+      mvprintw(start_y + i, start_x, "%s", keys[i].c_str());
       if (i == index) attroff(A_REVERSE);
     }
-
     refresh();
+
     timeout(-1);
     choice = getch();
-    Player p;
+    
     switch (choice) {
       case KEY_UP:   if (index > 0) --index; break;
       case KEY_DOWN: if (index < keys.size()-1) ++index; break;
       case ' ':
-        if (keys[index] == "custom") {
+          if (keys[index] == "custom") {
           const char* msg = "Size (rows x cols): ";
           mvprintw(start_y + keys.size() + 1, (term_cols - strlen(msg)) / 2, "%s", msg);
           echo();
@@ -212,14 +234,14 @@ main_loop()
             break;
           }
 
-          p = solving(std::unique_ptr<Board>(CustomBoardFactory(rows, cols).create()));
+          p = solving(std::make_unique<ClassicGame>(rows, cols).get());
         } else if (keys[index] == "scoreboard") {
           printsb(&sb);
         } else
-          p = solving(std::unique_ptr<Board>(factories[keys[index]]->create()));
+          p = solving(factories[keys[index]].get());
         break;
     }
-    if (!p.name.empty()) { sb.add(p); }
+    if (!p.name.empty()) { sb.add(p); p.name = ""; }
   } while (choice != 'q');
   sb.save();
 }
@@ -236,8 +258,9 @@ main ()
 
   init_pair(1, COLOR_BLACK, COLOR_BLUE);
   init_pair(2, COLOR_BLACK, COLOR_GREEN);
+  init_pair(3, COLOR_BLACK, COLOR_RED);
   
-  main_loop();
+  main_loop(); 
 
   attrset(A_NORMAL);
   endwin();

@@ -2,17 +2,13 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "board_controller.h"
-#include "board_factory.h"
 #include "score_model.h"
-#include "scoreboard.h"
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
-    ClassicBoardFactory cbf;
-    Scoreboard sb;
-    BoardController bc(&cbf);
-    ScoreboardModel sbm(&sb);
+    BoardController bc;
+    ScoreboardModel sbm;
     QObject::connect(&bc, &BoardController::gameFinished, &sbm, &ScoreboardModel::onGameFinished);
 
     QQmlApplicationEngine engine;
