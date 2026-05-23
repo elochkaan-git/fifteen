@@ -1,5 +1,4 @@
 #include "board.h"
-#include <memory>
 #include <utility>
 #include <vector>
 #include <cstdlib>
@@ -14,27 +13,52 @@ Board::Board(int n, int m)
     for (int j = 0; j < cols; ++j) {
       int index = i * cols + j;
       if (index + 1 == n * m)
-        field[index] = std::make_unique<Cell>(0);
+        field[index] = 0;
       else
-        field[index] = std::make_unique<Cell>(index + 1);
+        field[index] = index + 1;
     }
-  srand(time(0));
   shuffle();
 }
 
 void
-Board::shuffle() 
+Board::shuffle()
 {
-  do {
-    for (int i = rows - 1; i >= 0; --i) {
-      for (int j = cols - 1; j >= 0; --j) {
-        int index = i * cols + j;
-        int ri = rand() % (i + 1);
-        int rj = rand() % (j + 1);
-        std::swap(field[index], field[ri * cols + rj]);
-      }
+  int blankIndex = -1;
+  for (int i = 0; i < rows * cols; i++) {
+    if (field[i] == 0) {
+      blankIndex = i;
+      break;
     }
-  } while (!isSolvable());
+  }
+
+  int moves = 500;
+  int prevMove = -1;
+
+  for (int step = 0; step < moves; step++) {
+    int r = blankIndex / cols;
+    int c = blankIndex % cols;
+
+    int dr[] = {-1, 1, 0, 0};
+    int dc[] = {0, 0, -1, 1};
+    int opposite[] = {1, 0, 3, 2};
+
+    std::vector<int> valid;
+    for (int d = 0; d < 4; d++) {
+      int nr = r + dr[d];
+      int nc = c + dc[d];
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && d != prevMove)
+        valid.push_back(d);
+    }
+
+    int chosen = valid[rand() % valid.size()];
+    int nr = r + dr[chosen];
+    int nc = c + dc[chosen];
+    int neighborIndex = nr * cols + nc;
+
+    std::swap(field[blankIndex], field[neighborIndex]);
+    blankIndex = neighborIndex;
+    prevMove = opposite[chosen];
+  }
 }
 
 void
@@ -48,43 +72,9 @@ Board::get_cell(int x, int y) const
 {
   if (x < 0 || x >= cols || y < 0 || y >= rows)
     return 0;
-  return field[y * cols + x]->number;
+  return field[y * cols + x];
 }
 
 int Board::get_rows() const { return rows; }
 int Board::get_cols() const { return cols; }
 int Board::get_size() const { return rows * cols; }
-
-bool
-Board::isFree(int x, int y) const
-{
-  if (x < 0 || x >= cols || y < 0 || y >= rows)
-    return false;
-  return !field[y * cols + x]->number;
-}
-
-bool
-Board::isSolvable() const 
-{
-  std::vector<int> flat;
-  flat.resize(rows * cols);
-  int nullRow = 0;
-  for (int i = 0; i < rows * cols; ++i) {
-    if (!field[i]->number) {
-      flat[i] = 0;
-      nullRow = i / cols + 1;
-    } else {
-      flat[i] = field[i]->number;
-    }
-  }
-
-  int inversions = 0;
-  for (int i = 0; i < rows * cols; ++i)
-    for (int j = i+1; j < rows * cols; ++j)
-      if (flat[i] && flat[j] && flat[i] > flat[j])
-        inversions++;
-
-  if (!(cols % 2))
-    return !((inversions + nullRow) % 2);
-  return !(inversions % 2);
-}

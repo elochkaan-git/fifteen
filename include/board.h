@@ -1,7 +1,5 @@
 #pragma once
-#include <memory>
 #include <vector>
-#include "cell.h"
 
 class Board
 {
@@ -16,8 +14,5 @@ public:
 
 private:
     int rows, cols;
-    std::vector<std::unique_ptr<Cell>> field;
-
-    bool isFree(int x, int y) const;
-    bool isSolvable() const;
+    std::vector<int> field;
 };

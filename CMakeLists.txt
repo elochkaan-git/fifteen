@@ -12,7 +12,6 @@ qt_standard_project_setup(REQUIRES 6.8)
 
 add_library(libfifteen STATIC
     include/board.h
-    include/cell.h
     include/game.h
     include/game_creators.h
     include/game_rules.h
