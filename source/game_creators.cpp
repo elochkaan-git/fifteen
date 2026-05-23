@@ -81,7 +81,7 @@ TimeGame::result()
     cols(),
     steps(),
     time,
-    std::max(0, rows() * cols() * 200 - (steps() * 10 + time * 2))
+    std::max(0, (int)(rows() * cols() * 200 * 1.5 - (steps() * 10 + time * 2)))
   };
 }
 
