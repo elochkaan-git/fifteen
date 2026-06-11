@@ -5,8 +5,8 @@
 #include <ctime>
 
 Board::Board(int n, int m) 
-  : rows(n)
-  , cols(m) 
+  : rows(m)
+  , cols(n) 
 {
   field.resize(n * m);
   for (int i = 0; i < rows; ++i)
