@@ -36,7 +36,7 @@ public:
         std::stringstream s(line);
         while (getline(s, word, ';'))
           words.push_back(word);
-        if (words.size() < 6 || words.size() > 6) continue;
+        // if (words.size() < 6 || words.size() > 6) continue;
         GameResult p = {
           words[0],
           std::stoi(words[1]),
