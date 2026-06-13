@@ -73,3 +73,14 @@ install(TARGETS appfifteen
 install(TARGETS cfifteen
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# testing binary
+add_executable(test_board tests/test_board.cpp)
+target_link_libraries(test_board PRIVATE libfifteen)
+add_test(NAME TestBoardConstruct COMMAND test_board)
+
+add_executable(test_scoreboard tests/test_scoreboard.cpp)
+target_link_libraries(test_scoreboard PRIVATE libfifteen)
+add_test(NAME TestScoreboard COMMAND test_scoreboard)
+
+enable_testing()
