@@ -78,6 +78,7 @@ solving(Game* game)
     attroff(COLOR_PAIR(pair));
 
     if (status == GameStatus::Win) {
+      game->save();
       result = game->result();
       int input = 0, i = 0;
 
@@ -145,12 +146,12 @@ printsb(Scoreboard* sb) {
   getmaxyx(stdscr, term_rows, term_cols);
   char buf[8], timebuf[6];
   attron(A_REVERSE);
-  mvprintw(0, (term_cols - 46) / 2, "%20s %7s %5s %6s %7s", "name", "board", "steps", "time", "score");
+  mvprintw((term_rows - 16) / 2, (term_cols - 46) / 2, "%20s %7s %5s %6s %7s", "name", "board", "steps", "time", "score");
   for (int i = 0; i < sb->get_results().size(); ++i) {
     p = sb->get_results()[i];
     snprintf(buf, sizeof(buf), "%dx%d", p.rows, p.cols);
     snprintf(timebuf, sizeof(timebuf), "%02d:%02d", p.time / 60, p.time % 60);
-    mvprintw(i+1, (term_cols - 46) / 2, "%20s %7s %5d %6s %7d", p.name.c_str(), buf, p.steps, timebuf, p.score);
+    mvprintw(((term_rows - 16) / 2)+i+1, (term_cols - 46) / 2, "%20s %7s %5d %6s %7d", p.name.c_str(), buf, p.steps, timebuf, p.score);
   }
   attroff(A_REVERSE);
   timeout(-1);

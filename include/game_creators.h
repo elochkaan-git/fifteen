@@ -9,6 +9,7 @@ public:
   ClassicGame(int r, int c);
   void move(DIRECTION dir) override;
   time_t get_elapsed_time() override;
+  void save() override;
   GameResult result() override;
 
 private:
@@ -22,6 +23,7 @@ public:
   TimeGame(int r, int c, time_t limit);
   void move(DIRECTION dir) override;
   time_t get_elapsed_time() override;
+  void save() override;
   GameResult result() override;
 
 private:

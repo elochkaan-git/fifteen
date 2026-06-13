@@ -2,6 +2,7 @@
 #include <QAbstractListModel>
 #include <memory>
 #include <QDateTime>
+#include <qtmetamacros.h>
 #include "game.h"
 #include "game_creators.h"
 #include "structs.h"
@@ -79,6 +80,7 @@ public:
     Q_INVOKABLE int get_cols() const { return game->cols(); }
     Q_INVOKABLE int get_steps() const { return game->steps(); }
     Q_INVOKABLE int get_elapsed() const { return game->get_elapsed_time(); }
+    Q_INVOKABLE void save() { game->save(); }
 
     Q_INVOKABLE QString get_time() const {
         int elapsed = game->get_elapsed_time();
@@ -91,6 +93,7 @@ public:
         r.name = name.toStdString();
         emit gameFinished(r);
     }
+
 
 private:
     std::unique_ptr<Game> game;

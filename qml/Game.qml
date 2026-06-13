@@ -6,7 +6,8 @@ Item {
     focus: true
 
     Keys.onPressed: (event) => {
-        if      (event.key === Qt.Key_Up)    board.move_cell(2)
+        if      (board.status !== 0)         { event.accepted = true; return }
+        else if (event.key === Qt.Key_Up)    board.move_cell(2)
         else if (event.key === Qt.Key_Right) board.move_cell(3)
         else if (event.key === Qt.Key_Down)  board.move_cell(0)
         else if (event.key === Qt.Key_Left)  board.move_cell(1)
@@ -15,6 +16,7 @@ Item {
     }
 
     Timer {
+        id: timer
         interval: 100
         running: true
         repeat: true
@@ -78,6 +80,8 @@ Item {
             overlayText.text = msg
             overlayText.color = clr
             visible = true
+            timer.stop()
+            board.save()
         }
 
         Column {

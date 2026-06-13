@@ -23,17 +23,22 @@ ClassicGame::get_elapsed_time()
   return std::difftime(std::time(NULL), gs->time);
 }
 
+void
+ClassicGame::save()
+{
+  gs->time = get_elapsed_time();
+}
+
 GameResult
 ClassicGame::result()
 {
-  int time = (int)get_elapsed_time();
   return {
     "",
     rows(),
     cols(),
     steps(),
-    time,
-    std::max(0, rows() * cols() * 200 - (steps() * 10 + time * 2))
+    (int)gs->time,
+    std::max(0, rows() * cols() * 200 - (steps() * 10 + (int)gs->time * 2))
   };
 }
 
@@ -71,17 +76,22 @@ TimeGame::get_elapsed_time()
   return out < 0 ? 0 : out;
 }
 
+void
+TimeGame::save()
+{
+  gs->time = limit - get_elapsed_time();
+}
+
 GameResult
 TimeGame::result()
 { 
-  int time = (int)(limit - get_elapsed_time());
   return {
     "",
     rows(),
     cols(),
     steps(),
-    time,
-    std::max(0, (int)(rows() * cols() * 200 * 1.5 - (steps() * 10 + time * 2)))
+    (int)gs->time,
+    std::max(0, (int)(rows() * cols() * 200 * 1.5 - (steps() * 10 + (int)gs->time * 2)))
   };
 }
 

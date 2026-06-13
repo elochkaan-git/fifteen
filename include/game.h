@@ -18,6 +18,7 @@ public:
   int cols() const { return gs->board->get_cols(); }
   int steps() const { return gs->steps; }
   virtual time_t get_elapsed_time() = 0;
+  virtual void save() = 0;
   virtual GameResult result() = 0;
   GameStatus status() { return rules->status(gs.get()); }
   virtual ~Game() = default;
